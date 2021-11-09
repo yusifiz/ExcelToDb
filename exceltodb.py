@@ -25,8 +25,30 @@ def func():
             sql_tables = sheet_name
             df = pd.read_excel(file,sheet_name=sheet_name, index_col=None)
             df.to_sql(sql_tables, con=engine, if_exists="append", index=False)
-        return redirect('/')
+        return redirect('/converttoexcel')
     return render_template("index.html")
+
+
+conn=sqlite3.connect("data.db")
+
+@app.route("/converttoexcel",methods=["GET","POST"])
+def converttoexcel():
+    if request.method=="POST":
+        file = request.files['file']
+        filename = secure_filename(file.filename)
+        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        df=pd.read_sql("SELECT name FROM sqlite_master WHERE type='table'",conn)
+        marks_data = pd.DataFrame(df)
+        print(df)
+        print(file)
+        file_name = 'output.xlsx'
+        marks_data.to_excel(file_name)
+        
+        return redirect('/converttoexcel')
     
+    return render_template('converttoexcel.html')
+
+
+
 if __name__ == "__main__":
     app.run(debug=True)
