@@ -29,20 +29,31 @@ def func():
     return render_template("index.html")
 
 
-conn=sqlite3.connect("data.db")
+
 
 @app.route("/converttoexcel",methods=["GET","POST"])
 def converttoexcel():
     if request.method=="POST":
-        file = request.files['file']
-        filename = secure_filename(file.filename)
-        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-        df=pd.read_sql("SELECT name FROM sqlite_master WHERE type='table'",conn)
-        marks_data = pd.DataFrame(df)
-        print(df)
-        print(file)
-        file_name = 'output.xlsx'
-        marks_data.to_excel(file_name)
+        conn=sqlite3.connect("data.db")
+        filePath = "Info.xlsx"
+        conn = sqlite3.connect('data.db')
+        writer = pd.ExcelWriter(filePath, engine='xlsxwriter')
+
+        df= pd.read_sql("SELECT name FROM sqlite_master WHERE type='table'", conn)
+
+        print(df['name'])
+
+        for table_name in df['name']:
+            sheet_name = table_name
+
+            SQL = "select * from " + sheet_name
+
+            dft = pd.read_sql(SQL, conn)
+
+            print(dft)
+
+            dft.to_excel(writer, sheet_name=sheet_name, index=False)
+        writer.save() 
         
         return redirect('/converttoexcel')
     
